@@ -1,0 +1,446 @@
+import java.util.Scanner;
+import java.util.Random;
+
+public class Connect4 {
+
+	// Create an empty array for the board (It is here so it is global array)
+	// The board will be 6 units tall and 7 units long
+	// The first row will have the column markers (which is why the array is 7x7)
+	static String[][] board = new String[7][7];
+	
+	
+	public static void main(String[] args) {
+		
+		// Import scanner class
+		Scanner input = new Scanner(System.in);
+		
+		
+		// Ask user which mode they want to play
+		String mode;
+		while (true) {
+			System.out.println("Select your mode: Enter 1 for 2 players, "
+					+ "2 for playing against the CPU, or 0 to quit.");
+			mode = input.nextLine();
+			if (mode.equals("0") || mode.equals("1") || mode.equals("2"))
+				break;
+			else
+				System.out.println("Incorrect entry, please try again.");	
+		}
+		
+		
+		// Bounds for CPU random generator
+		int min = 1;
+		int max = 7;
+		
+		
+		// Create user/CPU input variables for the modes
+		String user1Choice, user2Choice, userChoice;
+		user1Choice = user2Choice = userChoice = null;
+		int CPUChoice = 1;
+		
+		
+		// Make the board empty
+		for (int row = 0; row < 7; row++) {
+			for (int column = 0; column < 7; column++) {
+				if (row==0)
+					board[row][column] = Integer.toString(column+1);
+				else
+					board[row][column] = ".";
+			}
+		}
+		
+		
+		// Create user incorrect input trackers
+		int user1Error  = 0, user2Error  = 0;
+		int user1ErrorTotal  = 0, user2ErrorTotal  = 0;
+		
+		
+		// Create row tracker (For when columns get filled)
+		int[] tracker = {0, 0, 0, 0, 0, 0, 0};
+		
+		
+		// Where the game begins
+		
+		// Player chooses to quit (Input 0)
+		if (mode.equals("0"))
+			System.out.println("Goodbye!");
+		
+		// Player vs Player Mode (Input 1)
+		else if (mode.equals("1")) {
+			System.out.println("You are playing: PVP. User 1 will be marked "
+					+ "with X spots and User 2 will be marked with O spots.");
+			
+			// Print empty board
+			for (int row = 0; row < 7; row++) {
+				for (int column = 0; column < 7; column++) {
+					if (column==0)
+						System.out.println();
+					System.out.printf("%3s", board[row][column]);
+				}
+			}
+			System.out.println();
+			
+			// Create while loop for the game
+			while (true) {
+				
+				// Create user input for Player 1
+				while (true) {
+					System.out.println("Player 1: Input a number 1-7 to place an item on the board or 9 to forfeit.");
+					user1Choice = input.nextLine();
+					
+					// User1 forfeits, exit current while loop
+					if (user1Choice.equals("9")) {
+						System.out.println("Player 1 forfeits to player 2. Player 2 wins.");
+						break;
+					
+					// User1 has correct input, check if column is full
+					} else if (user1Choice.equals("1") || user1Choice.equals("2") || user1Choice.equals("3") || user1Choice.equals("4") 
+							|| user1Choice.equals("5")||user1Choice.equals("6")||user1Choice.equals("7")) {
+						if (tracker[Integer.valueOf(user1Choice)-1] < 6) { // Test if row is full
+							tracker[Integer.valueOf(user1Choice)-1]++;
+							break; // User1 has correct input	
+						} else
+							System.out.println("That column is already full."); // Column is full
+					
+					// User1 enters invalid input
+					} else {
+						System.out.println("Incorrect entry, please try again.");
+						user1Error++;
+						user1ErrorTotal++; // Update error count totals
+						if (user1Error == 3 || user1ErrorTotal == 5) { // User1 has too many incorrect entries
+							System.out.println("“Player 1 forfeit the game due to reaching maximum incorrect entries.");
+							break;
+						}
+					}	
+				} if (user1Choice.equals("9") || user1Error == 3 || user1ErrorTotal == 5)
+					break; // User1 forfeits or has too many incorrect entries, exit the original while loop
+				user1Error = 0; // Reset user1 error
+				
+				
+				// Put user input on to the board (Player 1's turn)
+				board[7 - tracker[Integer.valueOf(user1Choice)-1]][Integer.valueOf(user1Choice) - 1] = "X";
+				
+				// Print the board (Player 1's turn)
+				System.out.println("Player 1's Turn:");
+				for (int row = 0; row < 7; row++) {
+					for (int column = 0; column < 7; column++) {
+						if (column==0)
+							System.out.println();
+						System.out.printf("%3s", board[row][column]);
+					}
+				} System.out.println();
+				
+				
+				// Winner validation for Player 1
+				if (verticalTest() || horizontalTest() || firstDiagonalTest() || secondDiagonalTest()) {
+					System.out.println("Game over! Player 1 wins!");
+					break;
+				}
+				
+				
+				// Create user input for Player 2
+				while (true) {
+					System.out.println("Player 2: Input a number 1-7 to place an item on the board or 9 to forfeit.");
+					user2Choice = input.nextLine();
+					
+					// User2 forfeits, exit current while loop
+					if (user2Choice.equals("9")) {
+						System.out.println("Player 2 forfeits to player 1. Player 1 wins.");
+						break;
+					
+					// User2 has correct input, check if column is full
+					} else if (user2Choice.equals("1") || user2Choice.equals("2") || user2Choice.equals("3") || user2Choice.equals("4") 
+							|| user2Choice.equals("5")||user2Choice.equals("6")||user2Choice.equals("7")) {
+						if (tracker[Integer.valueOf(user2Choice)-1] < 6) { // Test if row is full
+							tracker[Integer.valueOf(user2Choice)-1]++;
+							break; // User2 has correct input	
+						} else
+							System.out.println("That column is already full."); // Column is full
+					
+					// User2 enters invalid input
+					} else {
+						System.out.println("Incorrect entry, please try again.");
+						user2Error++;
+						user2ErrorTotal++; // Update error count totals
+						if (user2Error == 3 || user2ErrorTotal == 5) { // User2 has too many incorrect entries
+							System.out.println("“Player 2 forfeit the game due to reaching maximum incorrect entries.");
+							break;
+						}
+					}	
+				} if (user2Choice.equals("9") || user2Error == 3 || user2ErrorTotal == 5)
+					break; // User2 forfeits or has too many incorrect entries, exit the original while loop
+				user2Error = 0; // Reset user2 error
+				
+				// Put user input on to the board (Player 2's turn)
+				board[7 - tracker[Integer.valueOf(user2Choice)-1]][Integer.valueOf(user2Choice) - 1] = "O";
+				
+				// Print the board (Player 2's turn)
+				System.out.println("Player 2's Turn:");
+				for (int row = 0; row < 7; row++) {
+					for (int column = 0; column < 7; column++) {
+						if (column==0)
+							System.out.println();
+						System.out.printf("%3s", board[row][column]);
+					}
+				} System.out.println();
+				
+				
+				// Winner validation for Player 2
+				if (verticalTest() || horizontalTest() || firstDiagonalTest() || secondDiagonalTest()) {
+					System.out.println("Game over! Player 2 wins!");
+					break;
+				}
+				
+				
+				// Test if there are no more outcomes (Tie Situation)
+				if (tracker[0]==6 && tracker[1]==6 && tracker[2]==6 && tracker[3]==6 
+						&& tracker[4]==6 && tracker[5]==6 && tracker[7]==6) {
+					System.out.println("Game Over! It is tie");
+					break;
+				}
+			}
+			
+		// Player vs CPU Mode (Input 2)
+		} else {
+			System.out.println("You are playing: PVC. The User will be marked "
+					+ "with X spots and the CPU will be marked with O spots.");
+			
+			// Print empty board
+			for (int row = 0; row < 7; row++) {
+				for (int column = 0; column < 7; column++) {
+					if (column==0)
+						System.out.println();
+					System.out.printf("%3s", board[row][column]);
+				}
+			} System.out.println();
+			
+			// Create while loop for the game
+			while (true) {
+				
+				// Create user input
+				while (true) {
+					System.out.println("Input a number 1-7 to place an item on the board or 9 to forfeit.");
+					userChoice = input.nextLine();
+					
+					// User forfeits, exit current while loop
+					if (userChoice.equals("9")) {
+						System.out.println("You forfeited to the CPU. CPU wins.");
+						break;
+					
+					// User has correct input, check if column is full
+					} else if (userChoice.equals("1") || userChoice.equals("2") || userChoice.equals("3") || userChoice.equals("4") 
+							|| userChoice.equals("5")||userChoice.equals("6")||userChoice.equals("7")) {
+						if (tracker[Integer.valueOf(userChoice)-1] < 6) { // Test if row is full
+							tracker[Integer.valueOf(userChoice)-1]++;
+							break; // User has correct input	
+						} else
+							System.out.println("That column is already full."); // Column is full
+					
+					// User enters invalid input
+					} else {
+						System.out.println("Incorrect entry, please try again.");
+						user1Error++;
+						user1ErrorTotal++; // Update error count totals
+						if (user1Error == 3 || user1ErrorTotal == 5) { // User has too many incorrect entries
+							System.out.println("“Player forfeit the game due to reaching maximum incorrect entries.");
+							break;
+						}
+					}	
+				} if (userChoice.equals("9") || user1Error == 3 || user1ErrorTotal == 5)
+					break; // User forfeits or has too many incorrect entries, exit the original while loop
+				user1Error = 0; // Reset user error
+				
+				// Put user input on to the board (User's turn)
+				board[7 - tracker[Integer.valueOf(userChoice)-1]][Integer.valueOf(userChoice) - 1] = "X";
+				
+				// Print the board (User's turn)
+				System.out.println("Player's Turn:");
+				for (int row = 0; row < 7; row++) {
+					for (int column = 0; column < 7; column++) {
+						if (column==0)
+							System.out.println();
+						System.out.printf("%3s", board[row][column]);
+					}
+				} System.out.println();
+				
+								
+				// Winner validation for Player
+				if (verticalTest() || horizontalTest() || firstDiagonalTest() || secondDiagonalTest()) {
+					System.out.println("Game over! Player wins!");
+					break;
+				}
+				
+				
+				// CPU's turn
+				while (true) {
+
+					// Generate random int value from 1 to 7
+					CPUChoice = (int)Math.floor(Math.random()*(max-min+1)+min);
+					
+					// User1 has correct input, check if column is full
+					if (CPUChoice==1 || CPUChoice==2 || CPUChoice==3 || CPUChoice==4 
+							|| CPUChoice==5 || CPUChoice==6 ||CPUChoice==7) {
+						if (tracker[Integer.valueOf(CPUChoice)-1] < 6) { // Test if row is full
+							tracker[Integer.valueOf(CPUChoice)-1]++;
+							break; // User1 has correct input	
+						} else
+							System.out.println("That column is already full."); // Column is full
+					}
+				}
+					
+				
+				// Put CPU input on to the board (CPU's turn)
+				board[7 - tracker[Integer.valueOf(CPUChoice)-1]][Integer.valueOf(CPUChoice) - 1] = "O";
+				
+				// Print the board (CPU's turn)
+				System.out.println("CPU's Turn:");
+				for (int row = 0; row < 7; row++) {
+					for (int column = 0; column < 7; column++) {
+						if (column==0)
+							System.out.println();
+						System.out.printf("%3s", board[row][column]);
+					}
+				} System.out.println();
+				
+				
+				// Winner validation for CPU
+				if (verticalTest() || horizontalTest() || firstDiagonalTest() || secondDiagonalTest()) {
+					System.out.println("Game over! CPU wins!");
+					break;
+				}
+				
+				
+				// Test if there are no more outcomes (Tie Situation)
+				if (tracker[0]==6 && tracker[1]==6 && tracker[2]==6 && tracker[3]==6 
+						&& tracker[4]==6 && tracker[5]==6 && tracker[7]==6) {
+					System.out.println("Game Over! It is tie");
+					break;
+				}
+				
+			}
+		}
+			
+		// Close the scanner class
+		input.close();
+		
+	}
+	
+	// Vertical Winning Test
+	public static boolean verticalTest(){
+		for (int column=0;column<7;column++){
+			int row=1;
+			{if(!board[row][column].equals("."))
+				if (board[row][column].equals(board[row+1][column]))
+					if (board[row][column].equals(board[row+2][column]))
+						if (board[row][column].equals(board[row+3][column]))
+							return true;
+			}
+		
+			{if(!board[row+1][column].equals("."))
+				if (board[row+1][column].equals(board[row+2][column]))
+					if (board[row+1][column].equals(board[row+3][column]))
+						if (board[row+1][column].equals(board[row+4][column]))
+							return true;
+			}
+		
+			{if(!board[row+2][column].equals("."))
+				if (board[row+2][column].equals(board[row+3][column]))
+					if (board[row+2][column].equals(board[row+4][column]))
+						if (board[row+2][column].equals(board[row+5][column]))
+							return true;
+			}
+		} return false; // It doesn't pass the test
+	}
+
+	// Horizontal Winning Test
+	public static boolean horizontalTest(){
+		for (int row=1;row<7;row++){
+			int column=0;
+			{if(!board[row][column].equals("."))
+				if (board[row][column].equals(board[row][column+1]))
+					if (board[row][column].equals(board[row][column+2]))
+						if (board[row][column].equals(board[row][column+3]))
+							return true;
+			}
+		
+			{if(!board[row][column+1].equals("."))
+				if (board[row][column+1].equals(board[row][column+2]))
+					if (board[row][column+1].equals(board[row][column+3]))
+						if (board[row][column+1].equals(board[row][column+4]))
+							return true;
+			}
+		
+			{if(!board[row][column+2].equals("."))
+				if (board[row][column+2].equals(board[row][column+3]))
+					if (board[row][column+2].equals(board[row][column+4]))
+						if (board[row][column+2].equals(board[row][column+5]))
+							return true;
+			}
+		
+			{if(!board[row][column+3].equals("."))
+				if (board[row][column+3].equals(board[row][column+4]))
+					if (board[row][column+3].equals(board[row][column+5]))
+						if (board[row][column+3].equals(board[row][column+6]))
+							return true;
+			}
+		} return false; // It doesn't pass the test
+	}
+
+	
+	// Create tests
+	
+	// Diagonal Winning Test1
+	public static boolean firstDiagonalTest(){
+		for (int column=0;column<4;column++){
+			int row=1;
+			{if(!board[row][column].equals("."))
+				if (board[row][column].equals(board[row+1][column+1]))
+					if (board[row][column].equals(board[row+2][column+2]))
+						if (board[row][column].equals(board[row+3][column+3]))
+							return true;
+			}
+		
+			{if(!board[row+1][column].equals("."))
+				if (board[row+1][column].equals(board[row+2][column+1]))
+					if (board[row+1][column].equals(board[row+3][column+2]))
+						if (board[row+1][column].equals(board[row+4][column+3]))
+							return true;
+			}
+		
+			{if(!board[row+2][column].equals("."))
+				if (board[row+2][column].equals(board[row+3][column+1]))
+					if (board[row+2][column].equals(board[row+4][column+2]))
+						if (board[row+2][column].equals(board[row+5][column+3]))
+							return true;
+			}
+		} return false; // It doesn't pass the test
+	}
+
+	// Diagonal Winning Test2
+	public static boolean secondDiagonalTest(){
+		for (int column=3;column<7;column++){
+			int row=1;
+			{if(!board[row][column].equals("."))
+				if (board[row][column].equals(board[row+1][column-1]))
+					if (board[row][column].equals(board[row+2][column-2]))
+						if (board[row][column].equals(board[row+3][column-3]))
+							return true;
+			}
+		
+			{if(!board[row+1][column].equals("."))
+				if (board[row+1][column].equals(board[row+2][column-1]))
+					if (board[row+1][column].equals(board[row+3][column-2]))
+						if (board[row+1][column].equals(board[row+4][column-3]))
+							return true;
+			}
+		
+			{if(!board[row+2][column].equals("."))
+				if (board[row+2][column].equals(board[row+3][column-1]))
+					if (board[row+2][column].equals(board[row+4][column-2]))
+						if (board[row+2][column].equals(board[row+5][column-3]))
+							return true;
+			}
+		} return false; // It doesn't pass the test
+	}
+
+}
